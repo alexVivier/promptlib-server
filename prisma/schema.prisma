@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  displayName  String
+  passwordHash String
+  role         String   @default("user")
+  isActive     Boolean  @default(true)
+  settings     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  prompts  Prompt[]
+  folders  Folder[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Prompt {
+  id         String   @id @default(uuid())
+  title      String   @default("Sans titre")
+  content    String   @default("")
+  tags       String[] @default([])
+  folderId   String?
+  isFavorite Boolean  @default(false)
+  ownerId    String
+  yjsState   Bytes?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner  User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  folder Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  images Image[]
+
+  @@index([ownerId])
+  @@index([folderId])
+  @@map("prompts")
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  path      String
+  context   String   @default("")
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  prompts Prompt[]
+
+  @@unique([ownerId, path])
+  @@map("folders")
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  promptId  String
+  filename  String
+  mimeType  String
+  data      Bytes
+  size      Int
+  createdAt DateTime @default(now())
+
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@index([promptId])
+  @@map("images")
+}
