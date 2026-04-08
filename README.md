@@ -1,16 +1,16 @@
 # PromptLib Server
 
-Backend API pour PromptLib, une application collaborative de gestion de prompts IA.
+Backend API for PromptLib, a collaborative AI prompt management application.
 
-## Stack technique
+## Tech Stack
 
-- **Framework** : Fastify 5
-- **Base de données** : PostgreSQL + Prisma ORM
-- **Authentification** : JWT (access + refresh token rotation)
-- **Collaboration temps réel** : Yjs (CRDT) via WebSocket
-- **Langage** : TypeScript (ESM)
+- **Framework**: Fastify 5
+- **Database**: PostgreSQL + Prisma ORM
+- **Authentication**: JWT (access + refresh token rotation)
+- **Real-time Collaboration**: Yjs (CRDT) over WebSocket
+- **Language**: TypeScript (ESM)
 
-## Prérequis
+## Prerequisites
 
 - Node.js 20+
 - PostgreSQL
@@ -21,18 +21,18 @@ Backend API pour PromptLib, une application collaborative de gestion de prompts 
 npm install
 ```
 
-Créer un fichier `.env` à la racine du serveur :
+Create a `.env` file at the server root:
 
 ```env
 DATABASE_URL="postgresql://user:password@localhost:5432/promptlib"
-JWT_SECRET="une-chaine-aleatoire-de-32-caracteres"
+JWT_SECRET="a-random-32-character-string"
 JWT_ACCESS_EXPIRES="15m"
 JWT_REFRESH_EXPIRES="7d"
 PORT=3001
 CORS_ORIGIN="*"
 ```
 
-Initialiser la base de données :
+Initialize the database:
 
 ```bash
 npm run db:migrate
@@ -40,123 +40,123 @@ npm run db:migrate
 
 ## Scripts
 
-| Commande | Description |
+| Command | Description |
 |---|---|
-| `npm run dev` | Serveur en mode développement (hot reload) |
-| `npm run build` | Compilation TypeScript |
-| `npm start` | Lancement du serveur compilé |
-| `npm run db:migrate` | Exécuter les migrations Prisma |
-| `npm run db:generate` | Générer le client Prisma |
-| `npm run db:push` | Pousser le schéma vers la BDD |
+| `npm run dev` | Start dev server (hot reload) |
+| `npm run build` | Compile TypeScript |
+| `npm start` | Run compiled server |
+| `npm run db:migrate` | Run Prisma migrations |
+| `npm run db:generate` | Generate Prisma client |
+| `npm run db:push` | Push schema to database |
 
 ## Architecture
 
 ```
 src/
-├── index.ts              # Point d'entrée
-├── app.ts                # Initialisation Fastify et plugins
-├── config.ts             # Configuration (variables d'environnement)
+├── index.ts              # Entry point
+├── app.ts                # Fastify app initialization & plugins
+├── config.ts             # Configuration (environment variables)
 ├── lib/
-│   ├── prisma.ts         # Client Prisma (singleton)
-│   ├── password.ts       # Hachage bcrypt
-│   └── token.ts          # Génération de refresh tokens
+│   ├── prisma.ts         # Prisma client (singleton)
+│   ├── password.ts       # bcrypt hashing
+│   └── token.ts          # Refresh token generation
 ├── middleware/
-│   └── auth.ts           # Middleware d'authentification JWT
+│   └── auth.ts           # JWT authentication middleware
 ├── routes/
-│   ├── auth.ts           # Inscription, connexion, refresh, déconnexion
-│   ├── prompts.ts        # CRUD prompts + recherche
-│   ├── folders.ts        # Gestion des dossiers + contexte
-│   ├── images.ts         # Upload et service d'images
-│   ├── settings.ts       # Paramètres utilisateur
-│   └── admin.ts          # Administration des utilisateurs
+│   ├── auth.ts           # Signup, login, refresh, logout
+│   ├── prompts.ts        # Prompt CRUD + search
+│   ├── folders.ts        # Folder management + context
+│   ├── images.ts         # Image upload & serving
+│   ├── settings.ts       # User settings
+│   └── admin.ts          # User administration
 └── ws/
-    └── yjs-handler.ts    # Synchronisation CRDT via WebSocket
+    └── yjs-handler.ts    # CRDT sync over WebSocket
 ```
 
 ## API
 
-### Health check
+### Health Check
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/health` | Status du serveur |
+| `GET` | `/health` | Server status |
 
-### Authentification `/api/auth`
+### Authentication `/api/auth`
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `POST` | `/auth/signup` | Inscription (le 1er utilisateur devient admin) |
-| `POST` | `/auth/login` | Connexion (retourne access + refresh token) |
-| `POST` | `/auth/refresh` | Renouvellement du token |
-| `POST` | `/auth/logout` | Déconnexion (invalide la session) |
-| `GET` | `/auth/me` | Utilisateur courant |
+| `POST` | `/auth/signup` | Register (first user becomes admin) |
+| `POST` | `/auth/login` | Login (returns access + refresh token) |
+| `POST` | `/auth/refresh` | Refresh token |
+| `POST` | `/auth/logout` | Logout (invalidates session) |
+| `GET` | `/auth/me` | Current user |
 
-### Prompts `/api/prompts` (authentifié)
+### Prompts `/api/prompts` (authenticated)
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/prompts` | Liste des prompts (métadonnées) |
-| `GET` | `/prompts/:id` | Détail d'un prompt |
-| `POST` | `/prompts` | Créer un prompt |
-| `PATCH` | `/prompts/:id` | Modifier un prompt |
-| `DELETE` | `/prompts/:id` | Supprimer un prompt |
-| `GET` | `/prompts/search?q=` | Recherche (titre, contenu, tags) |
-| `GET` | `/prompts/tags` | Liste des tags de l'utilisateur |
+| `GET` | `/prompts` | List prompts (metadata only) |
+| `GET` | `/prompts/:id` | Get prompt details |
+| `POST` | `/prompts` | Create a prompt |
+| `PATCH` | `/prompts/:id` | Update a prompt |
+| `DELETE` | `/prompts/:id` | Delete a prompt |
+| `GET` | `/prompts/search?q=` | Search (title, content, tags) |
+| `GET` | `/prompts/tags` | List user's tags |
 
-### Dossiers `/api/folders` (authentifié)
+### Folders `/api/folders` (authenticated)
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/folders` | Liste des dossiers |
-| `POST` | `/folders` | Créer un dossier |
-| `PATCH` | `/folders/:id` | Renommer/modifier un dossier |
-| `DELETE` | `/folders/:id` | Supprimer un dossier (prompts déplacés à la racine) |
-| `GET` | `/folders/:id/context` | Récupérer le contexte d'un dossier |
-| `PUT` | `/folders/:id/context` | Définir le contexte d'un dossier |
+| `GET` | `/folders` | List folders |
+| `POST` | `/folders` | Create a folder |
+| `PATCH` | `/folders/:id` | Rename/update a folder |
+| `DELETE` | `/folders/:id` | Delete a folder (prompts moved to root) |
+| `GET` | `/folders/:id/context` | Get folder context |
+| `PUT` | `/folders/:id/context` | Set folder context |
 
 ### Images `/api/images`
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `POST` | `/images?promptId=` | Upload d'image (authentifié, max 10 Mo) |
-| `GET` | `/images/:id` | Servir une image (public) |
+| `POST` | `/images?promptId=` | Upload image (authenticated, max 10 MB) |
+| `GET` | `/images/:id` | Serve image (public) |
 
-### Paramètres `/api/settings` (authentifié)
+### Settings `/api/settings` (authenticated)
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/settings` | Récupérer les paramètres |
-| `PUT` | `/settings` | Modifier les paramètres |
+| `GET` | `/settings` | Get user settings |
+| `PUT` | `/settings` | Update user settings |
 
-### Administration `/api/admin` (admin uniquement)
+### Admin `/api/admin` (admin only)
 
-| Méthode | Route | Description |
+| Method | Route | Description |
 |---|---|---|
-| `GET` | `/admin/users` | Liste des utilisateurs |
-| `POST` | `/admin/users/:id/activate` | Activer un utilisateur |
-| `POST` | `/admin/users/:id/deactivate` | Désactiver un utilisateur |
-| `POST` | `/admin/users/:id/role` | Changer le rôle d'un utilisateur |
+| `GET` | `/admin/users` | List all users |
+| `POST` | `/admin/users/:id/activate` | Activate a user |
+| `POST` | `/admin/users/:id/deactivate` | Deactivate a user |
+| `POST` | `/admin/users/:id/role` | Change user role |
 
 ### WebSocket
 
 | Route | Description |
 |---|---|
-| `GET /yjs/:promptId?token=` | Synchronisation Yjs temps réel |
+| `GET /yjs/:promptId?token=` | Real-time Yjs sync |
 
-## Modèle de données
+## Data Model
 
-- **User** : comptes utilisateurs avec rôles (admin/user)
-- **Session** : gestion des refresh tokens (rotation)
-- **Prompt** : prompts avec contenu, tags, état Yjs (CRDT)
-- **Folder** : dossiers hiérarchiques avec contexte personnalisé
-- **Image** : images attachées aux prompts (PNG, JPEG, GIF, WebP, SVG)
+- **User**: user accounts with roles (admin/user)
+- **Session**: refresh token management (rotation)
+- **Prompt**: prompts with content, tags, Yjs state (CRDT)
+- **Folder**: hierarchical folders with custom context
+- **Image**: images attached to prompts (PNG, JPEG, GIF, WebP, SVG)
 
-## Sécurité
+## Security
 
-- Mots de passe hachés avec bcrypt (12 rounds)
-- Rotation des refresh tokens (invalidation après usage)
-- Authentification WebSocket par token JWT
-- Validation des types MIME pour les images
-- Limite de taille des fichiers (10 Mo)
-- Contrôle d'accès par rôle pour les routes admin
-- Suppression en cascade (user -> prompts, folders, sessions)
+- Passwords hashed with bcrypt (12 rounds)
+- Refresh token rotation (invalidated after use)
+- WebSocket authentication via JWT
+- MIME type validation for images
+- File size limit (10 MB)
+- Role-based access control for admin routes
+- Cascade deletion (user -> prompts, folders, sessions)
